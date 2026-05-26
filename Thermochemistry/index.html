@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thermochemistry Practice App</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for in-browser JSX compilation -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-slate-50 min-h-screen">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- Inline Icon Components ---
+        const FlaskConical = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/></svg>
+        );
+        const Target = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+        );
+        const CheckCircle2 = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+        );
+        const XCircle = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+        );
+        const BookOpen = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        );
+        const ArrowRight = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        );
+        const RotateCcw = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+        );
+
+        // --- Quiz Data ---
+        const questionPools = [
+          [
+            {
+              id: "1a",
+              outcome: "30-A1.6k: Standard Enthalpies of Formation",
+              question: "Calculate the standard enthalpy change of reaction (ΔH°<sub>rxn</sub>) for the combustion of methane gas (CH<sub>4</sub>) using standard enthalpies of formation (ΔH°<sub>f</sub>) from your data booklet.<br/><br/><i>Reaction:</i> CH<sub>4</sub>(g) + 2O<sub>2</sub>(g) → CO<sub>2</sub>(g) + 2H<sub>2</sub>O(g)",
+              options: ["-604.5 kJ", "-802.5 kJ", "+802.5 kJ", "-877.1 kJ"],
+              correctIndex: 1,
+              explanation: "Using the formula <b>ΔH°<sub>rxn</sub> = Σ(ΔH°<sub>f</sub> products) - Σ(ΔH°<sub>f</sub> reactants)</b> and your data booklet values:<br/>ΔH°<sub>rxn</sub> = [1(-393.5) + 2(-241.8)] - [1(-74.6) + 2(0)]<br/>ΔH°<sub>rxn</sub> = [-393.5 - 483.6] - [-74.6]<br/>ΔH°<sub>rxn</sub> = -877.1 + 74.6 = <b>-802.5 kJ</b>"
+            },
+            {
+              id: "1b",
+              outcome: "30-A1.6k: Standard Enthalpies of Formation",
+              question: "Calculate the standard enthalpy change of reaction (ΔH°<sub>rxn</sub>) for the combustion of propane gas (C<sub>3</sub>H<sub>8</sub>) using standard enthalpies of formation (ΔH°<sub>f</sub>) from your data booklet.<br/><br/><i>Reaction:</i> C<sub>3</sub>H<sub>8</sub>(g) + 5O<sub>2</sub>(g) → 3CO<sub>2</sub>(g) + 4H<sub>2</sub>O(g)",
+              options: ["-1180.5 kJ", "-2147.7 kJ", "+2043.9 kJ", "-2043.9 kJ"],
+              correctIndex: 3,
+              explanation: "Using the formula <b>ΔH°<sub>rxn</sub> = Σ(ΔH°<sub>f</sub> products) - Σ(ΔH°<sub>f</sub> reactants)</b> and your data booklet values:<br/>ΔH°<sub>rxn</sub> = [3(-393.5) + 4(-241.8)] - [1(-103.8) + 5(0)]<br/>ΔH°<sub>rxn</sub> = [-1180.5 - 967.2] - [-103.8]<br/>ΔH°<sub>rxn</sub> = -2147.7 + 103.8 = <b>-2043.9 kJ</b>"
+            }
+          ],
+          [
+            {
+              id: "2a",
+              outcome: "30-A1.6k: Standard Enthalpies of Formation",
+              question: "Hydrazine (N<sub>2</sub>H<sub>4</sub>) is a liquid rocket propellant. The combustion of hydrazine produces nitrogen gas and water vapor:<br/><br/>N<sub>2</sub>H<sub>4</sub>(l) + O<sub>2</sub>(g) → N<sub>2</sub>(g) + 2H<sub>2</sub>O(g)<br/><br/>The standard enthalpy change of this reaction (ΔH°<sub>rxn</sub>) is measured to be -534.2 kJ. <br/>Using standard enthalpies of formation from your data booklet, calculate the molar enthalpy of formation (ΔH°<sub>f</sub>) of liquid hydrazine.",
+              options: ["+50.6 kJ/mol", "-50.6 kJ/mol", "-37.4 kJ/mol", "+37.4 kJ/mol"],
+              correctIndex: 0,
+              explanation: "Using the formula <b>ΔH°<sub>rxn</sub> = Σ(Products) - Σ(Reactants)</b> and referencing your data booklet for H<sub>2</sub>O(g) (-241.8 kJ/mol):<br/>-534.2 = [1(0) + 2(-241.8)] - [1(ΔH°<sub>f, N<sub>2</sub>H<sub>4</sub></sub>) + 1(0)]<br/>-534.2 = [-483.6] - ΔH°<sub>f, N<sub>2</sub>H<sub>4</sub></sub><br/>ΔH°<sub>f, N<sub>2</sub>H<sub>4</sub></sub> = -483.6 - (-534.2)<br/>ΔH°<sub>f, N<sub>2</sub>H<sub>4</sub></sub> = <b>+50.6 kJ/mol</b>"
+            },
+            {
+              id: "2b",
+              outcome: "30-A1.6k: Standard Enthalpies of Formation",
+              question: "Baking soda (sodium bicarbonate) decomposes when heated to produce solid sodium carbonate, water vapor, and carbon dioxide gas:<br/><br/>2NaHCO<sub>3</sub>(s) → Na<sub>2</sub>CO<sub>3</sub>(s) + H<sub>2</sub>O(g) + CO<sub>2</sub>(g)<br/><br/>The standard enthalpy change of this reaction (ΔH°<sub>rxn</sub>) is +129.2 kJ. <br/>Given the molar enthalpy of formation for solid sodium carbonate is -1130.7 kJ/mol, use your data booklet for the remaining values to calculate the molar enthalpy of formation (ΔH°<sub>f</sub>) of solid sodium bicarbonate.",
+              options: ["-1895.2 kJ/mol", "-947.6 kJ/mol", "+947.6 kJ/mol", "-883.0 kJ/mol"],
+              correctIndex: 1,
+              explanation: "Using <b>ΔH°<sub>rxn</sub> = Σ(Products) - Σ(Reactants)</b>, the provided value for Na<sub>2</sub>CO<sub>3</sub>, and your data booklet:<br/>+129.2 = [1(-1130.7) + 1(-241.8) + 1(-393.5)] - [2(ΔH°<sub>f, NaHCO<sub>3</sub></sub>)]<br/>+129.2 = [-1766.0] - 2(ΔH°<sub>f, NaHCO<sub>3</sub></sub>)<br/>2(ΔH°<sub>f, NaHCO<sub>3</sub></sub>) = -1766.0 - 129.2<br/>2(ΔH°<sub>f, NaHCO<sub>3</sub></sub>) = -1895.2<br/>ΔH°<sub>f, NaHCO<sub>3</sub></sub> = <b>-947.6 kJ/mol</b>"
+            }
+          ],
+          [
+            {
+              id: "3a",
+              outcome: "30-A1.7k: Hess's Law Concepts",
+              question: "Which of the following best explains the core principle of Hess's Law?",
+              options: [
+                "The enthalpy change of a reaction is directly proportional to the temperature of the surroundings.",
+                "The total enthalpy change of a chemical reaction is independent of the reaction pathways taken, provided that we end up with the correct net reaction.",
+                "Energy is always absorbed when bonds are broken and released when bonds are formed.",
+                "The standard enthalpy of formation for any element in its standard state is always zero."
+              ],
+              correctIndex: 1,
+              explanation: "Hess's Law states that if a reaction takes place in one step or multiple steps, the overall enthalpy change is identical. The specific pathway doesn't matter, only the initial reactants and final products."
+            },
+            {
+              id: "3b",
+              outcome: "30-A1.7k: Hess's Law Concepts",
+              question: "Which of the following is a direct practical application of Hess's Law?",
+              options: [
+                "Measuring the exact heat capacity of a newly synthesized compound using a bomb calorimeter.",
+                "Determining that the enthalpy of formation of an element in its standard state is zero.",
+                "Using a series of known intermediate reactions to calculate the enthalpy of a reaction that is difficult or impossible to measure directly.",
+                "Observing that endothermic reactions feel cold to the touch because they absorb kinetic energy from the surroundings."
+              ],
+              correctIndex: 2,
+              explanation: "Because Hess's Law allows us to add chemical equations together to find a net enthalpy change, its primary practical use is determining the ΔH for reactions that happen too slowly, violently, or with too many side reactions to measure experimentally in a calorimeter."
+            }
+          ],
+          [
+            {
+              id: "4a",
+              outcome: "30-A1.7k: Applying Hess's Law",
+              question: "Determine the enthalpy change (ΔH) for the target reaction:<br/><b>Fe<sub>2</sub>O<sub>3</sub>(s) + 3CO(g) → 2Fe(s) + 3CO<sub>2</sub>(g)</b><br/><br/>Using the following series of reactions:<br/>1) CO(g) + &frac12;O<sub>2</sub>(g) → CO<sub>2</sub>(g) &nbsp;&nbsp;&nbsp; ΔH<sub>1</sub> = -283.0 kJ<br/>2) 2Fe(s) + <sup>3</sup>/<sub>2</sub>O<sub>2</sub>(g) → Fe<sub>2</sub>O<sub>3</sub>(s) &nbsp;&nbsp;&nbsp; ΔH<sub>2</sub> = -824.2 kJ",
+              options: ["-24.8 kJ", "+24.8 kJ", "-1673.2 kJ", "-1107.2 kJ"],
+              correctIndex: 0,
+              explanation: "To build the target reaction:<br/>• <b>Multiply Eq 1 by 3:</b> 3CO(g) + <sup>3</sup>/<sub>2</sub>O<sub>2</sub>(g) → 3CO<sub>2</sub>(g) &nbsp; (ΔH = -283.0 × 3 = -849.0 kJ)<br/>• <b>Reverse Eq 2</b> (change its sign!): Fe<sub>2</sub>O<sub>3</sub>(s) → 2Fe(s) + <sup>3</sup>/<sub>2</sub>O<sub>2</sub>(g) &nbsp; (ΔH = +824.2 kJ)<br/><br/>When you add them together, the <sup>3</sup>/<sub>2</sub> O<sub>2</sub> cancels out from both sides, leaving:<br/>Fe<sub>2</sub>O<sub>3</sub>(s) + 3CO(g) → 2Fe(s) + 3CO<sub>2</sub>(g)<br/><br/>Net ΔH = -849.0 + 824.2 = <b>-24.8 kJ</b>"
+            },
+            {
+              id: "4b",
+              outcome: "30-A1.7k: Applying Hess's Law",
+              question: "Determine the enthalpy change (ΔH) for the target reaction:<br/><b>N<sub>2</sub>(g) + 2O<sub>2</sub>(g) → 2NO<sub>2</sub>(g)</b><br/><br/>Using the following series of reactions:<br/>1) N<sub>2</sub>(g) + O<sub>2</sub>(g) → 2NO(g) &nbsp;&nbsp;&nbsp; ΔH<sub>1</sub> = +180.5 kJ<br/>2) NO(g) + &frac12;O<sub>2</sub>(g) → NO<sub>2</sub>(g) &nbsp;&nbsp;&nbsp; ΔH<sub>2</sub> = -57.1 kJ",
+              options: ["+123.4 kJ", "+66.3 kJ", "+237.6 kJ", "-66.3 kJ"],
+              correctIndex: 1,
+              explanation: "To build the target reaction:<br/>• <b>Keep Eq 1 as is:</b> N<sub>2</sub>(g) + O<sub>2</sub>(g) → 2NO(g) &nbsp; (ΔH = +180.5 kJ)<br/>• <b>Multiply Eq 2 by 2:</b> 2NO(g) + O<sub>2</sub>(g) → 2NO<sub>2</sub>(g) &nbsp; (ΔH = -57.1 × 2 = -114.2 kJ)<br/><br/>When you add them together, the 2NO(g) cancels out from both sides, leaving:<br/>N<sub>2</sub>(g) + 2O<sub>2</sub>(g) → 2NO<sub>2</sub>(g)<br/><br/>Net ΔH = +180.5 + (-114.2) = <b>+66.3 kJ</b>"
+            }
+          ],
+          [
+            {
+              id: "5a",
+              outcome: "30-A1.7k: Multi-Step Hess's Law",
+              question: "Calculate the ΔH for the synthesis of diborane (B<sub>2</sub>H<sub>6</sub>) from its elements:<br/><b>2B(s) + 3H<sub>2</sub>(g) → B<sub>2</sub>H<sub>6</sub>(g)</b><br/><br/>Given the following intermediate reactions:<br/>1) 4B(s) + 3O<sub>2</sub>(g) → 2B<sub>2</sub>O<sub>3</sub>(s) &nbsp;&nbsp;&nbsp; ΔH = -2546 kJ<br/>2) H<sub>2</sub>(g) + &frac12;O<sub>2</sub>(g) → H<sub>2</sub>O(g) &nbsp;&nbsp;&nbsp; ΔH = -242 kJ<br/>3) B<sub>2</sub>H<sub>6</sub>(g) + 3O<sub>2</sub>(g) → B<sub>2</sub>O<sub>3</sub>(s) + 3H<sub>2</sub>O(g) &nbsp;&nbsp;&nbsp; ΔH = -2016 kJ",
+              options: ["+17 kJ", "-17 kJ", "+1273 kJ", "-2148 kJ"],
+              correctIndex: 0,
+              explanation: "• <b>Divide Eq 1 by 2:</b> 2B(s) + 1.5O<sub>2</sub>(g) → B<sub>2</sub>O<sub>3</sub>(s) &nbsp; (ΔH = -2546 / 2 = -1273 kJ)<br/>• <b>Multiply Eq 2 by 3:</b> 3H<sub>2</sub>(g) + 1.5O<sub>2</sub>(g) → 3H<sub>2</sub>O(g) &nbsp; (ΔH = -242 × 3 = -726 kJ)<br/>• <b>Reverse Eq 3:</b> B<sub>2</sub>O<sub>3</sub>(s) + 3H<sub>2</sub>O(g) → B<sub>2</sub>H<sub>6</sub>(g) + 3O<sub>2</sub>(g) &nbsp; (ΔH = +2016 kJ)<br/><br/>Notice that 3H<sub>2</sub>O, B<sub>2</sub>O<sub>3</sub>, and exactly 3O<sub>2</sub> (1.5 + 1.5) cancel out on both sides.<br/><br/>Add the modified enthalpies: -1273 - 726 + 2016 = <b>+17 kJ</b>"
+            },
+            {
+              id: "5b",
+              outcome: "30-A1.7k: Multi-Step Hess's Law",
+              question: "Calculate the ΔH for the hydrogenation of ethene to ethane:<br/><b>C<sub>2</sub>H<sub>4</sub>(g) + H<sub>2</sub>(g) → C<sub>2</sub>H<sub>6</sub>(g)</b><br/><br/>Given the following intermediate combustion reactions:<br/>1) C<sub>2</sub>H<sub>4</sub>(g) + 3O<sub>2</sub>(g) → 2CO<sub>2</sub>(g) + 2H<sub>2</sub>O(g) &nbsp;&nbsp;&nbsp; ΔH = -1323 kJ<br/>2) C<sub>2</sub>H<sub>6</sub>(g) + <sup>7</sup>/<sub>2</sub>O<sub>2</sub>(g) → 2CO<sub>2</sub>(g) + 3H<sub>2</sub>O(g) &nbsp;&nbsp;&nbsp; ΔH = -1428 kJ<br/>3) H<sub>2</sub>(g) + &frac12;O<sub>2</sub>(g) → H<sub>2</sub>O(g) &nbsp;&nbsp;&nbsp; ΔH = -242 kJ",
+              options: ["+137 kJ", "-3257 kJ", "-137 kJ", "-2685 kJ"],
+              correctIndex: 2,
+              explanation: "• <b>Keep Eq 1:</b> C<sub>2</sub>H<sub>4</sub>(g) + 3O<sub>2</sub>(g) → 2CO<sub>2</sub>(g) + 2H<sub>2</sub>O(g) &nbsp; (ΔH = -1323 kJ)<br/>• <b>Reverse Eq 2:</b> 2CO<sub>2</sub>(g) + 3H<sub>2</sub>O(g) → C<sub>2</sub>H<sub>6</sub>(g) + <sup>7</sup>/<sub>2</sub>O<sub>2</sub>(g) &nbsp; (ΔH = +1428 kJ)<br/>• <b>Keep Eq 3:</b> H<sub>2</sub>(g) + &frac12;O<sub>2</sub>(g) → H<sub>2</sub>O(g) &nbsp; (ΔH = -242 kJ)<br/><br/>When added, the 2CO<sub>2</sub>, 3H<sub>2</sub>O, and exactly 3.5 O<sub>2</sub> (3 + 0.5) cancel out from both sides.<br/><br/>Add the modified enthalpies: -1323 + 1428 - 242 = <b>-137 kJ</b>"
+            }
+          ]
+        ];
+
+        // --- Helper Components ---
+        const FormattedText = ({ content, className = "" }) => (
+          <div className={className} dangerouslySetInnerHTML={{ __html: content }} />
+        );
+
+        // --- Main App Component ---
+        function App() {
+          const [currentQuizData, setCurrentQuizData] = useState([]);
+          const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+          const [score, setScore] = useState(0);
+          const [showResults, setShowResults] = useState(false);
+          const [selectedAnswer, setSelectedAnswer] = useState(null);
+          const [isSubmitted, setIsSubmitted] = useState(false);
+
+          // Pick a random question from each pool on component mount or restart
+          const generateQuiz = () => {
+            const newQuiz = questionPools.map(pool => {
+              const randomIndex = Math.floor(Math.random() * pool.length);
+              return pool[randomIndex];
+            });
+            setCurrentQuizData(newQuiz);
+          };
+
+          useEffect(() => {
+            generateQuiz();
+          }, []);
+
+          const currentQuestion = currentQuizData[currentQuestionIndex];
+
+          const handleSelectOption = (index) => {
+            if (!isSubmitted) {
+              setSelectedAnswer(index);
+            }
+          };
+
+          const handleSubmit = () => {
+            if (selectedAnswer === null) return;
+            setIsSubmitted(true);
+            if (selectedAnswer === currentQuestion.correctIndex) {
+              setScore(score + 1);
+            }
+          };
+
+          const handleNext = () => {
+            if (currentQuestionIndex < currentQuizData.length - 1) {
+              setCurrentQuestionIndex(currentQuestionIndex + 1);
+              setSelectedAnswer(null);
+              setIsSubmitted(false);
+            } else {
+              setShowResults(true);
+            }
+          };
+
+          const restartQuiz = () => {
+            generateQuiz(); // Generate fresh questions
+            setCurrentQuestionIndex(0);
+            setScore(0);
+            setShowResults(false);
+            setSelectedAnswer(null);
+            setIsSubmitted(false);
+          };
+
+          // Prevent rendering until quiz data is loaded
+          if (currentQuizData.length === 0) return null;
+
+          const renderQuizContent = () => (
+            <div className="w-full max-w-3xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100">
+              
+              {/* Quiz Header */}
+              <div className="bg-slate-800 text-white p-6 border-b-4 border-teal-500">
+                <div className="flex justify-between items-center mb-4">
+                  <div className="flex items-center gap-2">
+                    <FlaskConical className="text-teal-400" size={24} />
+                    <h1 className="text-xl font-bold tracking-tight">Thermochemistry Practice</h1>
+                  </div>
+                  <div className="text-sm font-medium bg-slate-700 px-3 py-1 rounded-full">
+                    Question {currentQuestionIndex + 1} of {currentQuizData.length}
+                  </div>
+                </div>
+                
+                {/* Progress Bar */}
+                <div className="w-full bg-slate-700 rounded-full h-2.5 mt-2">
+                  <div 
+                    className="bg-teal-500 h-2.5 rounded-full transition-all duration-300 ease-in-out" 
+                    style={{ width: `${((currentQuestionIndex) / currentQuizData.length) * 100}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              <div className="p-6 md:p-8">
+                {/* Outcome Tag */}
+                <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-md mb-6 uppercase tracking-wider">
+                  <Target size={14} />
+                  {currentQuestion.outcome}
+                </div>
+
+                {/* Question Text */}
+                <div className="text-lg text-slate-800 font-medium mb-8">
+                  <FormattedText content={currentQuestion.question} />
+                </div>
+
+                {/* Options */}
+                <div className="space-y-3 mb-8">
+                  {currentQuestion.options.map((option, index) => {
+                    
+                    // Determine styling based on state
+                    let buttonStyle = "border-slate-200 hover:border-teal-400 hover:bg-teal-50 text-slate-700 bg-white";
+                    let icon = null;
+
+                    if (isSubmitted) {
+                      if (index === currentQuestion.correctIndex) {
+                        buttonStyle = "border-emerald-500 bg-emerald-50 text-emerald-800 ring-2 ring-emerald-500 ring-offset-1";
+                        icon = <CheckCircle2 className="text-emerald-600" size={20} />;
+                      } else if (index === selectedAnswer) {
+                        buttonStyle = "border-rose-500 bg-rose-50 text-rose-800";
+                        icon = <XCircle className="text-rose-600" size={20} />;
+                      } else {
+                        buttonStyle = "border-slate-200 opacity-50 bg-slate-50 text-slate-400";
+                      }
+                    } else if (index === selectedAnswer) {
+                      buttonStyle = "border-teal-500 bg-teal-50 text-teal-900 ring-2 ring-teal-500";
+                    }
+
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => handleSelectOption(index)}
+                        disabled={isSubmitted}
+                        className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-200 flex justify-between items-center ${buttonStyle}`}
+                      >
+                        <span className="flex items-center gap-3">
+                          <span className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold ${isSubmitted && index === currentQuestion.correctIndex ? 'bg-emerald-200 text-emerald-800' : isSubmitted && index === selectedAnswer ? 'bg-rose-200 text-rose-800' : index === selectedAnswer ? 'bg-teal-200 text-teal-800' : 'bg-slate-100 text-slate-500'}`}>
+                            {String.fromCharCode(65 + index)}
+                          </span>
+                          <FormattedText content={option} />
+                        </span>
+                        {icon}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Feedback Section */}
+                {isSubmitted && (
+                  <div className={`p-5 rounded-xl mb-6 flex gap-4 items-start ${selectedAnswer === currentQuestion.correctIndex ? 'bg-emerald-50 border border-emerald-200' : 'bg-blue-50 border border-blue-200'}`}>
+                    <div className="mt-0.5">
+                      <BookOpen className={selectedAnswer === currentQuestion.correctIndex ? "text-emerald-600" : "text-blue-600"} size={24} />
+                    </div>
+                    <div>
+                      <h3 className={`font-bold mb-2 ${selectedAnswer === currentQuestion.correctIndex ? 'text-emerald-800' : 'text-blue-800'}`}>
+                        {selectedAnswer === currentQuestion.correctIndex ? 'Correct! Excellent job.' : 'Explanation'}
+                      </h3>
+                      <FormattedText className="text-slate-700 text-sm leading-relaxed" content={currentQuestion.explanation} />
+                    </div>
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex justify-end pt-4 border-t border-slate-100">
+                  {!isSubmitted ? (
+                    <button
+                      onClick={handleSubmit}
+                      disabled={selectedAnswer === null}
+                      className={`px-8 py-3 rounded-lg font-bold shadow-sm transition-all ${
+                        selectedAnswer === null 
+                          ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
+                          : 'bg-teal-600 hover:bg-teal-700 text-white shadow-md hover:shadow-lg hover:-translate-y-0.5'
+                      }`}
+                    >
+                      Check Answer
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleNext}
+                      className="px-8 py-3 bg-slate-800 hover:bg-slate-900 text-white rounded-lg font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-2 group"
+                    >
+                      {currentQuestionIndex < currentQuizData.length - 1 ? 'Next Question' : 'Finish Quiz'}
+                      <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+
+          const renderResults = () => {
+            const percentage = Math.round((score / currentQuizData.length) * 100);
+            let feedbackMsg = "";
+            
+            if (percentage === 100) feedbackMsg = "Perfect score! You have mastered these outcomes.";
+            else if (percentage >= 80) feedbackMsg = "Great job! You have a strong grasp of thermochemistry.";
+            else if (percentage >= 60) feedbackMsg = "Good effort. Review Hess's Law and standard enthalpies a bit more.";
+            else feedbackMsg = "Keep practicing! Reviewing the step-by-step explanations will help.";
+
+            return (
+              <div className="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100 p-8 text-center">
+                <div className="mb-6 inline-flex items-center justify-center w-24 h-24 bg-teal-100 rounded-full border-4 border-teal-50">
+                  <FlaskConical className="text-teal-600" size={48} />
+                </div>
+                
+                <h2 className="text-3xl font-extrabold text-slate-800 mb-2">Practice Complete!</h2>
+                <p className="text-slate-500 mb-8">{feedbackMsg}</p>
+                
+                <div className="bg-slate-50 rounded-2xl p-6 mb-8 border border-slate-100 shadow-inner">
+                  <div className="text-6xl font-black text-teal-600 mb-2">
+                    {score} <span className="text-3xl text-slate-400">/ {currentQuizData.length}</span>
+                  </div>
+                  <div className="text-slate-600 font-medium">
+                    Score ({percentage}%)
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 mb-8 text-left text-sm">
+                  <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+                    <div className="font-bold text-indigo-900 mb-1">Outcome 30-A1.6k</div>
+                    <div className="text-indigo-700">Standard Enthalpies of Formation</div>
+                  </div>
+                  <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                    <div className="font-bold text-blue-900 mb-1">Outcome 30-A1.7k</div>
+                    <div className="text-blue-700">Hess's Law Applications</div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={restartQuiz}
+                  className="inline-flex items-center gap-2 px-8 py-4 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-bold shadow-md hover:shadow-lg transition-all"
+                >
+                  <RotateCcw size={20} />
+                  Try New Practice Version
+                </button>
+              </div>
+            );
+          };
+
+          return (
+            <div className="flex items-center justify-center p-4 md:p-8 font-sans w-full min-h-screen">
+              {showResults ? renderResults() : renderQuizContent()}
+            </div>
+          );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
